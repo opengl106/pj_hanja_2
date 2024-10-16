@@ -3,24 +3,24 @@
 
 首先，我的问题正确的做法不是 seq2seq, 而是 token classification, 正如 NER 等经典问题。NER 等问题也是从韩语的语言上下文中寻找专有名词，也是需要对上下文的理解，也是 NLP 任务，也是使用 BERT 能做的更好的东西。一定程度上，这和“标记汉字词”很像：NE 词汇与日常词汇间存在泾渭分明的区别，正如汉字词汇与大韩词汇。
 
+"""
 import torch
 torch.cuda.is_available()
 
-import codecs
+model = AutoModel.from_pretrained("klue/roberta-large")
+"""
 
-from transformers import AutoTokenizer, AutoModelForMaskedLM
+from transformers import AutoTokenizer
 
-from train import labelize_inputs
+from dataloader import load_data
+from tokenizer import labelize_inputs
 
-tokenizer = AutoTokenizer.from_pretrained("KoichiYasuoka/roberta-large-korean-hanja")
-model = AutoModelForMaskedLM.from_pretrained("KoichiYasuoka/roberta-large-korean-hanja")
+tokenizer = AutoTokenizer.from_pretrained("klue/roberta-large")
 
-input_data_list = []
-for line in codecs.open('data/bible_ko.tsv', 'r', 'utf-8'):
-    hangul_sent, hanja_sent = line.strip().split("\t")
-    input_data_list.append((hangul_sent, hanja_sent))
+input_data_list = load_data()
 
-labeled_inputs, labels_to_hanja_words = labelize_inputs(input_data_list, tokenizer)
+labeled_inputs, labels_to_hanja_words, hanja_words_to_labels = labelize_inputs(input_data_list, tokenizer)
 
-list(labels_to_hanja_words.values())[0:100]
-list(labels_to_hanja_words.values())[100:200]
+list(labels_to_hanja_words.values())[0:250]
+list(labels_to_hanja_words.values())[250:500]
+labeled_inputs[411]
