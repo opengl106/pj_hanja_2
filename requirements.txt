@@ -1,4 +1,6 @@
 numpy == 2.1.2
 torch == 2.4.1
-transformers == 4.45.2
+transformers[torch] == 4.45.2
 datasets == 3.0.1
+evaluate == 0.4.3
+seqeval == 1.2.2

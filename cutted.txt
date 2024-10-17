@@ -7,21 +7,9 @@
 import torch
 torch.cuda.is_available()
 
-model = AutoModel.from_pretrained("klue/roberta-large")
-
-from transformers import AutoTokenizer
-
-from dataloader import load_data
-from tokenizer import labelize_inputs
-
-tokenizer = AutoTokenizer.from_pretrained("klue/roberta-large")
-
-input_data_list = load_data()
-
-labeled_inputs, labels_to_hanja_words, hanja_words_to_labels = labelize_inputs(input_data_list, tokenizer)
-
 list(labels_to_hanja_words.values())[0:250]
 list(labels_to_hanja_words.values())[250:500]
 labeled_inputs['train'][4181]
 labeled_inputs['test'][254]
+
 """

@@ -1,5 +1,4 @@
-
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
 from datasets import DatasetDict
@@ -60,7 +59,7 @@ def labelize_input(sentences: Dict[str, List[str]], tokenizer: AutoTokenizer, la
 
     return tokenized_inputs
 
-def currier(labelize_input: callable, tokenizer: AutoTokenizer, labels_to_hanja_words: Dict[int, str], hanja_words_to_labels: Dict[str, int]) -> callable:
+def currier(labelize_input: Callable, tokenizer: AutoTokenizer, labels_to_hanja_words: Dict[int, str], hanja_words_to_labels: Dict[str, int]) -> Callable[[Dict[str, List[str]]], Dict[str, torch.Tensor]]:
     def curried(sentences: Dict[str, List[str]]) -> Dict[str, torch.Tensor]:
         return labelize_input(sentences, tokenizer, labels_to_hanja_words, hanja_words_to_labels)
 
@@ -76,6 +75,6 @@ def labelize_inputs(input_dataset: DatasetDict, tokenizer: AutoTokenizer, labels
     hanja_words_to_labels = hanja_words_to_labels if hanja_words_to_labels else {tokenizer.decode(UNK_ID): UNK_LABEL}
 
     curried = currier(labelize_input, tokenizer, labels_to_hanja_words, hanja_words_to_labels)
-    labeled_inputs = input_dataset.map(curried, batched=True, batch_size=hp.batch_size)
+    labeled_inputs = input_dataset.map(curried, batched=True, batch_size=hp.labelizer_batch_size)
 
     return labeled_inputs, labels_to_hanja_words, hanja_words_to_labels
