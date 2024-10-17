@@ -1,5 +1,8 @@
-from typing import Callable, Dict, List, Optional, Tuple
+import os
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import pandas as pd
 import torch
 from datasets import DatasetDict
 from transformers import AutoTokenizer
@@ -59,6 +62,7 @@ def labelize_input(sentences: Dict[str, List[str]], tokenizer: AutoTokenizer, la
 
     return tokenized_inputs
 
+
 def currier(labelize_input: Callable, tokenizer: AutoTokenizer, labels_to_hanja_words: Dict[int, str], hanja_words_to_labels: Dict[str, int]) -> Callable[[Dict[str, List[str]]], Dict[str, torch.Tensor]]:
     def curried(sentences: Dict[str, List[str]]) -> Dict[str, torch.Tensor]:
         return labelize_input(sentences, tokenizer, labels_to_hanja_words, hanja_words_to_labels)
@@ -66,15 +70,40 @@ def currier(labelize_input: Callable, tokenizer: AutoTokenizer, labels_to_hanja_
     return curried
 
 
+def load_dict(filename: str) -> Optional[Dict[Any, Any]]:
+    filepath = Path(hp.model_output_dir) / filename
+    if not os.path.exists(filepath):
+        return None
+    df = pd.read_csv(filepath)
+    result = dict(zip(df['key'], df['value']))
+
+    return result
+
+
+def save_dict(filename: str, result: Dict[Any, Any]) -> None:
+    filepath = Path(hp.model_output_dir) / filename
+    df = pd.DataFrame(list(result.items()), columns=['key', 'value'])
+    df.to_csv(filepath, index=False)
+
+
 def labelize_inputs(input_dataset: DatasetDict, tokenizer: AutoTokenizer, labels_to_hanja_words: Optional[Dict[int, str]] = None, hanja_words_to_labels: Optional[Dict[str, int]] = None) -> Tuple[List[Dict[str, torch.Tensor]], Dict[int, str], Dict[str, int]]:
     """
     Convert input dataset to labelized ones.
     """
-    # TODO: Needs a mechanism to save these 2 dicts to local files, in case there is more data in future to be processed.
-    labels_to_hanja_words = labels_to_hanja_words if labels_to_hanja_words else {UNK_LABEL: tokenizer.decode(UNK_ID)}
-    hanja_words_to_labels = hanja_words_to_labels if hanja_words_to_labels else {tokenizer.decode(UNK_ID): UNK_LABEL}
+    if not labels_to_hanja_words:
+        labels_to_hanja_words = load_dict('labels_to_hanja_words.csv')
+    if not labels_to_hanja_words:
+        labels_to_hanja_words = {UNK_LABEL: tokenizer.decode(UNK_ID)}
+
+    if not hanja_words_to_labels:
+        hanja_words_to_labels = load_dict('hanja_words_to_labels.csv')
+    if not hanja_words_to_labels:
+        hanja_words_to_labels = {tokenizer.decode(UNK_ID): UNK_LABEL}
 
     curried = currier(labelize_input, tokenizer, labels_to_hanja_words, hanja_words_to_labels)
     labeled_inputs = input_dataset.map(curried, batched=True, batch_size=hp.labelizer_batch_size)
+
+    save_dict('labels_to_hanja_words.csv', labels_to_hanja_words)
+    save_dict('hanja_words_to_labels.csv', hanja_words_to_labels)
 
     return labeled_inputs, labels_to_hanja_words, hanja_words_to_labels
