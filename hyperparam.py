@@ -7,6 +7,7 @@ class Hyperparams:
     # Model
     pretrained_model_repo = "klue/roberta-small"
     model_output_dir = "roberta-small-hangul-2-hanja"
+    user_repo = "opengl106"
 
     # Learning
     learning_rate = 2e-5

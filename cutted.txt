@@ -13,3 +13,26 @@ labeled_inputs['train'][4181]
 labeled_inputs['test'][254]
 
 """
+from predict import predict
+predict('디두모라 하는 도마가 다른 제자들에게 말하되 우리도 주와 함께 죽으러 가자 하니라')
+predict(['디두모라 하는 도마가 다른 제자들에게 말하되 우리도 주와 함께 죽으러 가자 하니라', '돌을 옮겨 놓으니 예수께서 눈을 들어 우러러 보시고 가라사대 아버 지여 내 말을 들으신 것을 감사하나이다'])
+
+
+import time
+import codecs
+strings = []
+i = 0
+for line in codecs.open('data/bible_ko.tsv', 'r', 'utf-8'):
+    if len(line) <= 500:
+        strings.append(line.strip().split("\t")[0])
+    i += 1
+    if i >= 1000:
+        break
+
+strings[962]
+
+t = time.time()
+c = predict(strings)
+dt = time.time() - t
+dt
+c[962]
